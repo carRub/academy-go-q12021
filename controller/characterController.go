@@ -77,7 +77,6 @@ func (c CharacterController) GetCharacterByID(id int) (*model.Character, error) 
 			character.Species = record[3]
 			character.Gender = record[4]
 		}
-
 	}
 
 	return &character, nil
