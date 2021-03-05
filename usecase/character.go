@@ -8,19 +8,19 @@ type CharacterService interface {
 	GetCharacterByID(id int) (*model.Character, error)
 }
 
-// CharacterUseCase defines the use case fields
-type CharacterUseCase struct {
+// CharacterInteractor defines the use case fields
+type CharacterInteractor struct {
 	Service CharacterService
 }
 
-// NewCharacterUseCase generates a new character usecase
-func NewCharacterUseCase (s CharacterService) (*CharacterUseCase, error) {
+// NewCharacterInteractor generates a new character usecase
+func NewCharacterInteractor (s CharacterService) (*CharacterInteractor, error) {
 
-	return &CharacterUseCase{s}, nil
+	return &CharacterInteractor{s}, nil
 }
 
 // GetCharacters returns all the existing characters
-func (c CharacterUseCase) GetCharacters() ([]model.Character, error) {
+func (c CharacterInteractor) GetCharacters() ([]model.Character, error) {
 	characters, err := c.Service.GetCharacters()
 
 	if err != nil {
@@ -31,7 +31,7 @@ func (c CharacterUseCase) GetCharacters() ([]model.Character, error) {
 }
 
 // GetCharacterByID returns the character corresponding to a given Id
-func (c CharacterUseCase) GetCharacterByID(id int) (*model.Character, error) {
+func (c CharacterInteractor) GetCharacterByID(id int) (*model.Character, error) {
 	character, err := c.Service.GetCharacterByID(id)
 
 	if err != nil {
