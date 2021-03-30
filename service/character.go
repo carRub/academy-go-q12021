@@ -1,0 +1,78 @@
+package service
+
+import (
+	"encoding/csv"
+	"os"
+	"io"
+	"strconv"
+
+	"github.com/carRub/academy-go-q12021/model"
+)
+
+type Service struct {
+	fr *os.File
+	fw *csv.Writer
+}
+
+func NewCharacterService (fr *os.File, fw *csv.Writer) (*Service, error) {
+	// TODO: Implement?
+	return &Service{fr, fw}, nil
+}
+
+func (s *Service) GetCharacters() ([]model.Character, error) {
+	// TODO: Implement
+	csvFile, _ := os.Open("assets/characters.csv")
+	defer csvFile.Close()
+	r := csv.NewReader(csvFile)
+
+	var character model.Character
+	var characters []model.Character
+
+	for {
+		record, err := r.Read()
+		
+		if err == io.EOF {
+			break
+		}
+
+		charID, _ := strconv.ParseInt(record[0], 10, 64)
+
+		character.ID = int(charID)
+		character.Name = record[1]
+		character.Status = record[2]
+		character.Species = record[3]
+		character.Gender = record[4]
+
+		characters = append(characters, character)
+	}
+
+	return characters, nil
+}
+
+func (s *Service) GetCharacterByID(id int) (*model.Character, error) {
+	// TODO: Implementa
+	csvFile, _ := os.Open("assets/characters.csv")
+	defer csvFile.Close()
+	r := csv.NewReader(csvFile)
+
+	var character model.Character
+
+	for {
+		record, err := r.Read()
+		
+		if err == io.EOF {
+			break
+		}
+
+		charID, _ := strconv.ParseInt(record[0], 10, 64)
+		if int(charID) == id {
+			character.ID = int(charID)
+			character.Name = record[1]
+			character.Status = record[2]
+			character.Species = record[3]
+			character.Gender = record[4]
+		}
+	}
+
+	return &character, nil
+}

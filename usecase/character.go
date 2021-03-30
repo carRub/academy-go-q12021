@@ -21,6 +21,7 @@ func NewCharacterInteractor (s CharacterService) (*CharacterInteractor, error) {
 // GetCharacters returns all the existing characters
 func (c CharacterInteractor) GetCharacters() ([]model.Character, error) {
 	characters, err := c.Service.GetCharacters()
+
 	if err != nil {
 		return nil, err
 	}

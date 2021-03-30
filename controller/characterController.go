@@ -1,83 +1,69 @@
 package controller
 
 import (
-	"os"
-	"encoding/csv"
+	"fmt"
 	"strconv"
-	"io"
+	"net/http"
 	
 	"github.com/carRub/academy-go-q12021/model"
-	"github.com/carRub/academy-go-q12021/usecase"
+	"github.com/unrolled/render"
+	"github.com/gorilla/mux"
 )
 
 // CharacterController defines what a controller must contain
 type CharacterController struct {
-	characterInteractor usecase.CharacterInteractor
+	useCase CharacterUseCase
+	render *render.Render
 }
 
 // CharacterUseCase defines functions to refer to our use cases
 type CharacterUseCase interface {
-	GetCharacters() ([]model.Character)
-	GetCharacterByID(id int) (*model.Character) 
+	GetCharacters() ([]model.Character, error)
+	GetCharacterByID(id int) (*model.Character, error) 
 }
 
 // NewCharacterController Creates a new character controller 
-func NewCharacterController (ci usecase.CharacterInteractor) CharacterController {
-	return CharacterController{ci}
-}
-
-func (c CharacterController) GetCharacters() ([]model.Character, error) {
-	csvFile, _ := os.Open("assets/characters.csv")
-	defer csvFile.Close()
-	r := csv.NewReader(csvFile)
-
-	var character model.Character
-	var characters []model.Character
-
-	for {
-		record, err := r.Read()
-		
-		if err == io.EOF {
-			break
-		}
-
-		charID, _ := strconv.ParseInt(record[0], 10, 64)
-
-		character.ID = int(charID)
-		character.Name = record[1]
-		character.Status = record[2]
-		character.Species = record[3]
-		character.Gender = record[4]
-
-		characters = append(characters, character)
+func NewCharacterController (cu CharacterUseCase, r *render.Render) CharacterController {
+	c := CharacterController{
+		useCase: cu,
+		render: r,
 	}
 
-	return characters, nil
+	return c
 }
 
-func (c CharacterController) GetCharacterByID(id int) (*model.Character, error) {
-	csvFile, _ := os.Open("assets/characters.csv")
-	defer csvFile.Close()
-	r := csv.NewReader(csvFile)
+func (c CharacterController) GetCharacters(w http.ResponseWriter, r *http.Request) {
+	characters, err := c.useCase.GetCharacters()
+	if err != nil {
+		err = fmt.Errorf("usecase request failed: %w", err)
+		c.render.Text(w, http.StatusBadRequest, err.Error())
 
-	var character model.Character
-
-	for {
-		record, err := r.Read()
-		
-		if err == io.EOF {
-			break
-		}
-
-		charID, _ := strconv.ParseInt(record[0], 10, 64)
-		if int(charID) == id {
-			character.ID = int(charID)
-			character.Name = record[1]
-			character.Status = record[2]
-			character.Species = record[3]
-			character.Gender = record[4]
-		}
+		return
 	}
 
-	return &character, nil
+	c.render.JSON(w, http.StatusOK, characters)
+}
+
+func (c CharacterController) GetCharacterByID(w http.ResponseWriter, r *http.Request) {
+	reqId := mux.Vars(r)["id"]
+	if reqId == "" {
+		c.render.Text(w, http.StatusBadRequest, "Controller: param {id} must not be null")
+		return
+	}
+
+	id, err := strconv.Atoi(reqId)
+	if err != nil {
+		c.render.Text(w, http.StatusBadRequest, "Controller: param {id} must be an integer")
+		return
+	}
+
+	character, err := c.useCase.GetCharacterByID(id)
+	if err != nil {
+		err = fmt.Errorf("Usecase request failed %w", err)
+		c.render.Text(w, http.StatusBadRequest, err.Error())
+
+		return
+	}
+
+	c.render.JSON(w, http.StatusOK, character)
 }
