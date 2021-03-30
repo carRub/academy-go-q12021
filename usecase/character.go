@@ -15,14 +15,12 @@ type CharacterInteractor struct {
 
 // NewCharacterInteractor generates a new character usecase
 func NewCharacterInteractor (s CharacterService) (*CharacterInteractor, error) {
-
 	return &CharacterInteractor{s}, nil
 }
 
 // GetCharacters returns all the existing characters
 func (c CharacterInteractor) GetCharacters() ([]model.Character, error) {
 	characters, err := c.Service.GetCharacters()
-
 	if err != nil {
 		return nil, err
 	}
