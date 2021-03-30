@@ -16,6 +16,7 @@ func main() {
 	csvFile, _ := os.Open("assets/characters.csv")
 	fr := csv.NewReader(csvFile)
 	fw := csv.NewWriter(csvFile)
+	defer csvFile.Close()
 
 	s, _ := service.NewCharacterService(fr, fw)
 	i, _ := usecase.NewCharacterInteractor(s)

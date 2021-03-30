@@ -2,7 +2,6 @@ package service
 
 import (
 	"encoding/csv"
-	"os"
 	"io"
 	"strconv"
 
@@ -21,9 +20,7 @@ func NewCharacterService (fr *csv.Reader, fw *csv.Writer) (*Service, error) {
 
 func (s *Service) GetCharacters() ([]model.Character, error) {
 	// TODO: Implement
-	csvFile, _ := os.Open("assets/characters.csv")
-	defer csvFile.Close()
-	r := csv.NewReader(csvFile)
+	r := s.fr
 
 	var character model.Character
 	var characters []model.Character
@@ -51,9 +48,7 @@ func (s *Service) GetCharacters() ([]model.Character, error) {
 
 func (s *Service) GetCharacterByID(id int) (*model.Character, error) {
 	// TODO: Implementa
-	csvFile, _ := os.Open("assets/characters.csv")
-	defer csvFile.Close()
-	r := csv.NewReader(csvFile)
+	r := s.fr
 
 	var character model.Character
 
