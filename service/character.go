@@ -10,11 +10,11 @@ import (
 )
 
 type Service struct {
-	fr *os.File
+	fr *csv.Reader
 	fw *csv.Writer
 }
 
-func NewCharacterService (fr *os.File, fw *csv.Writer) (*Service, error) {
+func NewCharacterService (fr *csv.Reader, fw *csv.Writer) (*Service, error) {
 	// TODO: Implement?
 	return &Service{fr, fw}, nil
 }
