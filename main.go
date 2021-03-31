@@ -14,10 +14,20 @@ import (
 )
 
 func main() {
-	csvFile, _ := os.Open("assets/characters.csv")
+	csvFile, err := os.Open("assets/characters.csv")
+	if err != nil {
+		log.Fatal("Error creating file reader", err)
+	}
 	fr := csv.NewReader(csvFile)
-	fw := csv.NewWriter(csvFile)
+
+	csvW, err := os.OpenFile("assets/characters.csv", os.O_APPEND|os.O_WRONLY,  os.ModeAppend)
+	if err != nil {
+		log.Fatal("Error creating file writer")
+	}
+	fw := csv.NewWriter(csvW)
+	
 	defer csvFile.Close()
+	defer csvW.Close()
 
 	s, _ := service.NewCharacterService(fr, fw)
 	i, _ := usecase.NewCharacterInteractor(s)

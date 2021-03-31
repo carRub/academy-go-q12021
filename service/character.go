@@ -2,8 +2,12 @@ package service
 
 import (
 	"encoding/csv"
+	"encoding/json"
 	"fmt"
 	"io"
+	"io/ioutil"
+	"log"
+	"net/http"
 	"strconv"
 
 	"github.com/carRub/academy-go-q12021/model"
@@ -76,4 +80,36 @@ func (s *Service) GetCharacterByID(id int) (*model.Character, error) {
 	}
 
 	return &character, nil
+}
+
+func (s *Service) InsertExternalCharacter(id int) error {
+	url := fmt.Sprintf("https://rickandmortyapi.com/api/character/%v", id)
+	w := s.fw
+
+	res, err := http.Get(url)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	data, _ := ioutil.ReadAll(res.Body)
+	res.Body.Close()
+
+	var c model.Character
+	if err := json.Unmarshal(data, &c); err != nil {
+		log.Fatal("Service: Could not Unmarshal response", err)
+	}
+
+	var record []string
+	record = append(record, strconv.FormatInt(int64(c.ID), 10), c.Name, c.Status, c.Species, c.Gender)
+	if err := w.Write(record); err != nil {
+		log.Fatalln("error writing record to csv:", err)
+	}
+
+	w.Flush()
+
+	if err := w.Error(); err != nil {
+		log.Fatal(err)
+	}
+
+	return nil
 }

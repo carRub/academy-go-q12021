@@ -20,6 +20,7 @@ type CharacterController struct {
 type CharacterUseCase interface {
 	GetCharacters() ([]model.Character, error)
 	GetCharacterByID(id int) (*model.Character, error) 
+	InsertExternalCharacter(id int) error
 }
 
 // NewCharacterController Creates a new character controller 
@@ -66,4 +67,28 @@ func (c CharacterController) GetCharacterByID(w http.ResponseWriter, r *http.Req
 	}
 
 	c.render.JSON(w, http.StatusOK, character)
+}
+
+func (c CharacterController) InsertExternalCharacter(w http.ResponseWriter, r *http.Request) {
+	reqId := mux.Vars(r)["id"]
+	if reqId == "" {
+		c.render.Text(w, http.StatusBadRequest, "Controller: param {id} must not be null")
+		return
+	}
+
+	id, err := strconv.Atoi(reqId)
+	if err != nil {
+		c.render.Text(w, http.StatusBadRequest, "Controller: param {id} must be an integer")
+		return
+	}
+
+	err = c.useCase.InsertExternalCharacter(id)
+	if err != nil {
+		err = fmt.Errorf("Usecase request failed %w", err)
+		c.render.Text(w, http.StatusBadRequest, err.Error())
+
+		return
+	}
+
+	c.render.JSON(w, http.StatusOK, nil)
 }

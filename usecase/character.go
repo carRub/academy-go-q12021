@@ -6,6 +6,7 @@ import "github.com/carRub/academy-go-q12021/model"
 type CharacterService interface {
 	GetCharacters() ([]model.Character, error)
 	GetCharacterByID(id int) (*model.Character, error)
+	InsertExternalCharacter(id int) error
 }
 
 // CharacterInteractor defines the use case fields
@@ -38,4 +39,14 @@ func (c CharacterInteractor) GetCharacterByID(id int) (*model.Character, error) 
 	}
 
 	return character, nil
+}
+
+func (c CharacterInteractor) InsertExternalCharacter(id int) (error) {
+	err := c.Service.InsertExternalCharacter(id)
+
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
