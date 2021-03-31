@@ -2,6 +2,7 @@ package service
 
 import (
 	"encoding/csv"
+	"fmt"
 	"io"
 	"strconv"
 
@@ -49,6 +50,7 @@ func (s *Service) GetCharacters() ([]model.Character, error) {
 func (s *Service) GetCharacterByID(id int) (*model.Character, error) {
 	// TODO: Implementa
 	r := s.fr
+	fmt.Println(id)
 
 	var character model.Character
 
@@ -60,12 +62,16 @@ func (s *Service) GetCharacterByID(id int) (*model.Character, error) {
 		}
 
 		charID, _ := strconv.ParseInt(record[0], 10, 64)
-		if int(charID) == id {
-			character.ID = int(charID)
+		fileId := int(charID)
+
+		if fileId == id {
+			fmt.Println("character found")
+			character.ID = fileId
 			character.Name = record[1]
 			character.Status = record[2]
 			character.Species = record[3]
 			character.Gender = record[4]
+			break
 		}
 	}
 

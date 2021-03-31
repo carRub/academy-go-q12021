@@ -2,7 +2,8 @@ package main
 
 import (
 	"encoding/csv"
-	"fmt"
+	"log"
+	"net/http"
 	"os"
 
 	"github.com/carRub/academy-go-q12021/controller"
@@ -23,5 +24,5 @@ func main() {
 	c := controller.NewCharacterController(i, render.New())
 	r, _ := router.NewRouter(c)
 
-	fmt.Println("All layers created successfully", r)
+	log.Fatal(http.ListenAndServe(":3000", r))
 }
