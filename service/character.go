@@ -8,31 +8,45 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
 	"strconv"
 
 	"github.com/carRub/academy-go-q12021/model"
 )
 
 type Service struct {
-	fr *csv.Reader
-	fw *csv.Writer
+	url  string
+	file string
 }
 
-func NewCharacterService (fr *csv.Reader, fw *csv.Writer) (*Service, error) {
+func NewCharacterService(url, file string) (*Service, error) {
 	// TODO: Implement?
-	return &Service{fr, fw}, nil
+	if url == "" {
+		return nil, fmt.Errorf("Empty url")
+	}
+
+	if file == "" {
+		return nil, fmt.Errorf("Empty file path")
+	}
+
+	return &Service{url, file}, nil
 }
 
 func (s *Service) GetCharacters() ([]model.Character, error) {
 	// TODO: Implement
-	r := s.fr
+	csvFile, err := os.Open(s.file)
+	if err != nil {
+		log.Fatal("Error creating file reader", err)
+	}
+	r := csv.NewReader(csvFile)
+	defer csvFile.Close()
 
 	var character model.Character
 	var characters []model.Character
 
 	for {
 		record, err := r.Read()
-		
+
 		if err == io.EOF {
 			break
 		}
@@ -53,14 +67,18 @@ func (s *Service) GetCharacters() ([]model.Character, error) {
 
 func (s *Service) GetCharacterByID(id int) (*model.Character, error) {
 	// TODO: Implementa
-	r := s.fr
-	fmt.Println(id)
+	csvFile, err := os.Open(s.file)
+	if err != nil {
+		log.Fatal("Error creating file reader", err)
+	}
+	r := csv.NewReader(csvFile)
+	defer csvFile.Close()
 
 	var character model.Character
 
 	for {
 		record, err := r.Read()
-		
+
 		if err == io.EOF {
 			break
 		}
@@ -83,10 +101,17 @@ func (s *Service) GetCharacterByID(id int) (*model.Character, error) {
 }
 
 func (s *Service) InsertExternalCharacter(id int) error {
-	url := fmt.Sprintf("https://rickandmortyapi.com/api/character/%v", id)
-	w := s.fw
+	reqUrl := s.url + strconv.Itoa(id)
 
-	res, err := http.Get(url)
+	csvW, err := os.OpenFile(s.file, os.O_APPEND|os.O_WRONLY,  os.ModeAppend)
+	if err != nil {
+		log.Fatal("Error creating file writer")
+	}
+	w := csv.NewWriter(csvW)
+	
+	defer csvW.Close()
+
+	res, err := http.Get(reqUrl)
 	if err != nil {
 		log.Fatal(err)
 	}

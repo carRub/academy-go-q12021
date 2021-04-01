@@ -2,35 +2,43 @@ package controller
 
 import (
 	"fmt"
-	"strconv"
 	"net/http"
-	
+	"strconv"
+
 	"github.com/carRub/academy-go-q12021/model"
-	"github.com/unrolled/render"
 	"github.com/gorilla/mux"
+	"github.com/unrolled/render"
 )
 
 // CharacterController defines what a controller must contain
 type CharacterController struct {
 	useCase CharacterUseCase
-	render *render.Render
+	render  *render.Render
 }
 
 // CharacterUseCase defines functions to refer to our use cases
 type CharacterUseCase interface {
 	GetCharacters() ([]model.Character, error)
-	GetCharacterByID(id int) (*model.Character, error) 
+	GetCharacterByID(id int) (*model.Character, error)
 	InsertExternalCharacter(id int) error
 }
 
-// NewCharacterController Creates a new character controller 
-func NewCharacterController (cu CharacterUseCase, r *render.Render) CharacterController {
-	c := CharacterController{
-		useCase: cu,
-		render: r,
+// NewCharacterController Creates a new character controller
+func NewCharacterController(cu CharacterUseCase, r *render.Render) (CharacterController, error) {
+	if cu == nil {
+		return CharacterController{}, fmt.Errorf("Empty usecase")
 	}
 
-	return c
+	if r == nil {
+		return CharacterController{}, fmt.Errorf("Empty render")
+	}
+
+	c := CharacterController{
+		useCase: cu,
+		render:  r,
+	}
+
+	return c, nil
 }
 
 func (c CharacterController) GetCharacters(w http.ResponseWriter, r *http.Request) {

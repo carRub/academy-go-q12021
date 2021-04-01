@@ -1,6 +1,15 @@
 package usecase
 
-import "github.com/carRub/academy-go-q12021/model"
+import (
+	"fmt"
+
+	"github.com/carRub/academy-go-q12021/model"
+)
+
+// CharacterInteractor defines the use case fields
+type CharacterInteractor struct {
+	Service CharacterService
+}
 
 // CharacterService interface to define the use cases applicable to this application/project
 type CharacterService interface {
@@ -9,13 +18,12 @@ type CharacterService interface {
 	InsertExternalCharacter(id int) error
 }
 
-// CharacterInteractor defines the use case fields
-type CharacterInteractor struct {
-	Service CharacterService
-}
-
 // NewCharacterInteractor generates a new character usecase
 func NewCharacterInteractor (s CharacterService) (*CharacterInteractor, error) {
+	if s == nil {
+		return nil, fmt.Errorf("Usecase: Empty service")
+	}
+
 	return &CharacterInteractor{s}, nil
 }
 
