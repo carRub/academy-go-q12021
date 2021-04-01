@@ -19,7 +19,7 @@ type CharacterService interface {
 }
 
 // NewCharacterInteractor generates a new character usecase
-func NewCharacterInteractor (s CharacterService) (*CharacterInteractor, error) {
+func NewCharacterInteractor(s CharacterService) (*CharacterInteractor, error) {
 	if s == nil {
 		return nil, fmt.Errorf("Usecase: Empty service")
 	}
@@ -49,7 +49,7 @@ func (c CharacterInteractor) GetCharacterByID(id int) (*model.Character, error) 
 	return character, nil
 }
 
-func (c CharacterInteractor) InsertExternalCharacter(id int) (error) {
+func (c CharacterInteractor) InsertExternalCharacter(id int) error {
 	err := c.Service.InsertExternalCharacter(id)
 
 	if err != nil {

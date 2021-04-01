@@ -103,12 +103,12 @@ func (s *Service) GetCharacterByID(id int) (*model.Character, error) {
 func (s *Service) InsertExternalCharacter(id int) error {
 	reqUrl := s.url + strconv.Itoa(id)
 
-	csvW, err := os.OpenFile(s.file, os.O_APPEND|os.O_WRONLY,  os.ModeAppend)
+	csvW, err := os.OpenFile(s.file, os.O_APPEND|os.O_WRONLY, os.ModeAppend)
 	if err != nil {
 		log.Fatal("Error creating file writer")
 	}
 	w := csv.NewWriter(csvW)
-	
+
 	defer csvW.Close()
 
 	res, err := http.Get(reqUrl)
