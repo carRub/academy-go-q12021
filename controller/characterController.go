@@ -20,7 +20,7 @@ type CharacterController struct {
 type CharacterUseCase interface {
 	GetCharacters() ([]model.Character, error)
 	GetCharacterByID(id int) (*model.Character, error)
-	InsertExternalCharacter(id int) error
+	InsertExternalCharacter(id int) (*model.Character, error)
 }
 
 // NewCharacterController Creates a new character controller
@@ -90,13 +90,12 @@ func (c CharacterController) InsertExternalCharacter(w http.ResponseWriter, r *h
 		return
 	}
 
-	err = c.useCase.InsertExternalCharacter(id)
+	character, err := c.useCase.InsertExternalCharacter(id)
 	if err != nil {
 		err = fmt.Errorf("Usecase request failed %w", err)
 		c.render.Text(w, http.StatusBadRequest, err.Error())
-
 		return
 	}
 
-	c.render.JSON(w, http.StatusOK, nil)
+	c.render.JSON(w, http.StatusOK, character)
 }

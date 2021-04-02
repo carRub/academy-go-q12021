@@ -20,7 +20,6 @@ type Service struct {
 }
 
 func NewCharacterService(url, file string) (*Service, error) {
-	// TODO: Implement?
 	if url == "" {
 		return nil, fmt.Errorf("Empty url")
 	}
@@ -33,7 +32,6 @@ func NewCharacterService(url, file string) (*Service, error) {
 }
 
 func (s *Service) GetCharacters() ([]model.Character, error) {
-	// TODO: Implement
 	csvFile, err := os.Open(s.file)
 	if err != nil {
 		log.Fatal("Error creating file reader", err)
@@ -66,41 +64,15 @@ func (s *Service) GetCharacters() ([]model.Character, error) {
 }
 
 func (s *Service) GetCharacterByID(id int) (*model.Character, error) {
-	// TODO: Implementa
-	csvFile, err := os.Open(s.file)
-	if err != nil {
-		log.Fatal("Error creating file reader", err)
-	}
-	r := csv.NewReader(csvFile)
-	defer csvFile.Close()
-
-	var character model.Character
-
-	for {
-		record, err := r.Read()
-
-		if err == io.EOF {
-			break
-		}
-
-		charID, _ := strconv.ParseInt(record[0], 10, 64)
-		fileId := int(charID)
-
-		if fileId == id {
-			fmt.Println("character found")
-			character.ID = fileId
-			character.Name = record[1]
-			character.Status = record[2]
-			character.Species = record[3]
-			character.Gender = record[4]
-			break
-		}
+	character, err := readRecordFromCsv(s, id)
+	if err == io.EOF {
+		return nil, fmt.Errorf("Character not found in file")
 	}
 
 	return &character, nil
 }
 
-func (s *Service) InsertExternalCharacter(id int) error {
+func (s *Service) InsertExternalCharacter(id int) (*model.Character, error) {
 	reqUrl := s.url + strconv.Itoa(id)
 
 	csvW, err := os.OpenFile(s.file, os.O_APPEND|os.O_WRONLY, os.ModeAppend)
@@ -136,5 +108,39 @@ func (s *Service) InsertExternalCharacter(id int) error {
 		log.Fatal(err)
 	}
 
-	return nil
+	return &c, nil
+}
+
+func readRecordFromCsv(s *Service, id int) (model.Character, error) {
+	csvFile, err := os.Open(s.file)
+	if err != nil {
+		log.Fatal("Error creating file reader", err)
+	}
+	r := csv.NewReader(csvFile)
+	defer csvFile.Close()
+
+	var character model.Character
+
+	for {
+		record, err := r.Read()
+
+		if err == io.EOF {
+			return model.Character{}, err
+		}
+
+		charID, _ := strconv.ParseInt(record[0], 10, 64)
+		fileId := int(charID)
+
+		if fileId == id {
+			fmt.Println("character found")
+			character.ID = fileId
+			character.Name = record[1]
+			character.Status = record[2]
+			character.Species = record[3]
+			character.Gender = record[4]
+			break
+		}
+	}
+
+	return character, nil
 }

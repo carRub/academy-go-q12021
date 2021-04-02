@@ -20,5 +20,5 @@ func main() {
 	c, _ := controller.NewCharacterController(i, render.New())
 	r, _ := router.NewRouter(c)
 
-	log.Fatal(http.ListenAndServe(":3000", r))
+	log.Fatal(http.ListenAndServe("localhost:3000", r))
 }

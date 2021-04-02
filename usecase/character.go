@@ -15,7 +15,7 @@ type CharacterInteractor struct {
 type CharacterService interface {
 	GetCharacters() ([]model.Character, error)
 	GetCharacterByID(id int) (*model.Character, error)
-	InsertExternalCharacter(id int) error
+	InsertExternalCharacter(id int) (*model.Character, error)
 }
 
 // NewCharacterInteractor generates a new character usecase
@@ -49,12 +49,12 @@ func (c CharacterInteractor) GetCharacterByID(id int) (*model.Character, error) 
 	return character, nil
 }
 
-func (c CharacterInteractor) InsertExternalCharacter(id int) error {
-	err := c.Service.InsertExternalCharacter(id)
+func (c CharacterInteractor) InsertExternalCharacter(id int) (*model.Character, error) {
+	character, err := c.Service.InsertExternalCharacter(id)
 
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	return nil
+	return character, nil
 }
