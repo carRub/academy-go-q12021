@@ -69,7 +69,7 @@ func (s *Service) GetCharacters() ([]model.Character, error) {
 func (s *Service) GetCharacterByID(id int) (*model.Character, error) {
 	character, err := readRecordFromCsv(s, id)
 	if err == io.EOF {
-		return nil, fmt.Errorf("Character not found in file")
+		return nil, fmt.Errorf("Character not found in file %w", err)
 	}
 
 	return &character, nil
@@ -80,7 +80,7 @@ func (s *Service) InsertExternalCharacter(id int) (*model.Character, error) {
 
 	csvW, err := os.OpenFile(s.file, os.O_APPEND|os.O_WRONLY, os.ModeAppend)
 	if err != nil {
-		log.Fatal("Error creating file writer")
+		return nil, fmt.Errorf("Error creating file writer %w", err)
 	}
 	w := csv.NewWriter(csvW)
 
@@ -91,55 +91,59 @@ func (s *Service) InsertExternalCharacter(id int) (*model.Character, error) {
 		log.Fatal(err)
 	}
 
-	data, _ := ioutil.ReadAll(res.Body)
+	data, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		res.Body.Close()
+		return nil, fmt.Errorf("Could not read response body %w", err)
+	}
 	res.Body.Close()
 
 	var c model.Character
 	if err := json.Unmarshal(data, &c); err != nil {
-		log.Fatal("Service: Could not Unmarshal response", err)
+		return nil, fmt.Errorf("Service: could not Umarshal response %w", err)
 	}
 
 	var record []string
 	record = append(record, strconv.FormatInt(int64(c.ID), 10), c.Name, c.Status, c.Species, c.Gender)
 	if err := w.Write(record); err != nil {
-		log.Fatalln("error writing record to csv:", err)
+		return nil, fmt.Errorf("Writing to csv %w", err)
 	}
 
 	w.Flush()
 
 	if err := w.Error(); err != nil {
-		log.Fatal(err)
+		return nil, fmt.Errorf("writer error %w", err)
 	}
 
 	return &c, nil
 }
 
 func (s *Service) GetCharactersConcurrently(t string, items int, itemsPerWorkers int) ([]model.Character, error) {
-	fmt.Println("getCharactersConcurrently")
 	results := make(chan model.Character)
 	shutdown := make(chan struct{})
 	jobs := make(chan int, items)
 
 	csvFile, err := os.Open(s.file)
 	if err != nil {
-		log.Fatal("Error creating file reader", err)
+		return nil, fmt.Errorf("Error creating file reader", err)
 	}
 	r := csv.NewReader(csvFile)
 	defer csvFile.Close()
 
-	for w := 1; w <= 2; w++ {
+	for w := 1; w <= 3; w++ {
 		go worker(r, jobs, shutdown, results)
 	}
 
-	for i := 0; i <= items; i++ {
+	for i := 1; i <= items; i++ {
 		jobs <- i
 	}
-	fmt.Println("closing jobs")
 	close(jobs)
 
 	var characters []model.Character
 	for character := range results {
 		fmt.Println("iterating Results")
+		fmt.Println("Characters: ", characters)
+
 		if isOfType(t, character.ID) {
 			fmt.Println("appending")
 			characters = append(characters, character)
@@ -207,9 +211,14 @@ func readRecordFromCsv(s *Service, id int) (model.Character, error) {
 }
 
 func worker(r *csv.Reader, jobs <-chan int, shutdown <-chan struct{}, results chan model.Character) {
-	for range jobs {
+	for job := range jobs {
 		select {
-		case <-jobs:
+		case <-shutdown:
+			//log
+			fmt.Println("shutting down from worker")
+			return
+		default:
+			fmt.Println("The job is: ", job)
 			record, err := r.Read()
 
 			if err == io.EOF {
@@ -230,10 +239,7 @@ func worker(r *csv.Reader, jobs <-chan int, shutdown <-chan struct{}, results ch
 			
 			fmt.Println(character)
 			results <- character
-		case <-shutdown:
-			//log
-			fmt.Println("shutting down from worker")
-			return
+		
 		}
 	}
 	fmt.Println("leaving worker")
