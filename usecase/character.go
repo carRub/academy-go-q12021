@@ -16,6 +16,7 @@ type CharacterService interface {
 	GetCharacters() ([]model.Character, error)
 	GetCharacterByID(id int) (*model.Character, error)
 	InsertExternalCharacter(id int) (*model.Character, error)
+	GetCharactersConcurrently(t string, items int, itemsPerWorkers int) ([]model.Character, error)
 }
 
 // NewCharacterInteractor generates a new character usecase
@@ -57,4 +58,14 @@ func (c CharacterInteractor) InsertExternalCharacter(id int) (*model.Character, 
 	}
 
 	return character, nil
+}
+
+func (c CharacterInteractor) GetCharactersConcurrently(t string, items int, itemsPerWorkers int) ([]model.Character, error) {
+	characters, err := c.Service.GetCharactersConcurrently(t, items, itemsPerWorkers)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return characters, nil
 }

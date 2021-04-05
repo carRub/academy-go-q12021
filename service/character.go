@@ -111,6 +111,60 @@ func (s *Service) InsertExternalCharacter(id int) (*model.Character, error) {
 	return &c, nil
 }
 
+func (s *Service) GetCharactersConcurrently(t string, items int, itemsPerWorkers int) ([]model.Character, error) {
+	fmt.Println("getCharactersConcurrently")
+	results := make(chan model.Character)
+	shutdown := make(chan struct{})
+	jobs := make(chan int, items)
+
+	csvFile, err := os.Open(s.file)
+	if err != nil {
+		log.Fatal("Error creating file reader", err)
+	}
+	r := csv.NewReader(csvFile)
+	defer csvFile.Close()
+
+	for w := 1; w <= 2; w++ {
+		go worker(r, jobs, shutdown, results)
+	}
+
+	for i := 0; i <= items; i++ {
+		jobs <- i
+	}
+	fmt.Println("closing jobs")
+	close(jobs)
+
+	var characters []model.Character
+	for character := range results {
+		fmt.Println("iterating Results")
+		if isOfType(t, character.ID) {
+			fmt.Println("appending")
+			characters = append(characters, character)
+		}
+
+		if len(characters) == itemsPerWorkers {
+			fmt.Println("leaving results for")
+			break
+		}
+	}
+	fmt.Println("shutting down")
+	close(shutdown)
+
+	return characters, nil
+}
+
+func isOfType(t string, id int) bool {
+	if t == "odd" && id%2 != 0 {
+		return true
+	}
+
+	if t == "even" && id%2 == 0 {
+		return true
+	}
+
+	return false
+}
+
 func readRecordFromCsv(s *Service, id int) (model.Character, error) {
 	csvFile, err := os.Open(s.file)
 	if err != nil {
@@ -143,4 +197,37 @@ func readRecordFromCsv(s *Service, id int) (model.Character, error) {
 	}
 
 	return character, nil
+}
+
+func worker(r *csv.Reader, jobs <-chan int, shutdown <-chan struct{}, results chan model.Character) {
+	for range jobs {
+		select {
+		case <-jobs:
+			record, err := r.Read()
+
+			if err == io.EOF {
+				break
+			}
+
+			var character model.Character
+			charID, err := strconv.ParseInt(record[0], 10, 64)
+			if err != nil {
+				log.Fatal("worker: couldn't cast string to int")
+			}
+
+			character.ID = int(charID)
+			character.Name = record[1]
+			character.Status = record[2]
+			character.Species = record[3]
+			character.Gender = record[4]
+			
+			fmt.Println(character)
+			results <- character
+		case <-shutdown:
+			//log
+			fmt.Println("shutting down from worker")
+			return
+		}
+	}
+	fmt.Println("leaving worker")
 }
