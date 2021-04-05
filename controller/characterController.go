@@ -7,6 +7,7 @@ import (
 	"strconv"
 
 	"github.com/carRub/academy-go-q12021/model"
+
 	"github.com/gorilla/mux"
 	"github.com/unrolled/render"
 )
@@ -70,7 +71,7 @@ func (c CharacterController) GetCharacterByID(w http.ResponseWriter, r *http.Req
 
 	character, err := c.useCase.GetCharacterByID(id)
 	if err != nil {
-		err = fmt.Errorf("Usecase request failed %w", err)
+		err = fmt.Errorf("Usecase request failed: %w", err)
 		c.render.Text(w, http.StatusBadRequest, err.Error())
 
 		return

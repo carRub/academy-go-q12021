@@ -49,7 +49,10 @@ func (s *Service) GetCharacters() ([]model.Character, error) {
 			break
 		}
 
-		charID, _ := strconv.ParseInt(record[0], 10, 64)
+		charID, err := strconv.ParseInt(record[0], 10, 64)
+		if err != nil {
+			log.Fatal("Service/getCharacters: couldn't cast string to int")
+		}
 
 		character.ID = int(charID)
 		character.Name = record[1]
@@ -182,7 +185,11 @@ func readRecordFromCsv(s *Service, id int) (model.Character, error) {
 			return model.Character{}, err
 		}
 
-		charID, _ := strconv.ParseInt(record[0], 10, 64)
+		charID, err := strconv.ParseInt(record[0], 10, 64)
+		if err != nil {
+			log.Fatal("Service: couldn't cast string to int")
+		}
+
 		fileId := int(charID)
 
 		if fileId == id {
