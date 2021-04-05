@@ -3,6 +3,7 @@ package service
 import (
 	"encoding/csv"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -45,7 +46,7 @@ func (s *Service) GetCharacters() ([]model.Character, error) {
 	for {
 		record, err := r.Read()
 
-		if err == io.EOF {
+		if errors.Is(err, io.EOF) {
 			break
 		}
 
@@ -185,7 +186,7 @@ func readRecordFromCsv(s *Service, id int) (model.Character, error) {
 	for {
 		record, err := r.Read()
 
-		if err == io.EOF {
+		if errors.Is(err, io.EOF) {
 			return model.Character{}, err
 		}
 
@@ -221,7 +222,7 @@ func worker(r *csv.Reader, jobs <-chan int, shutdown <-chan struct{}, results ch
 			fmt.Println("The job is: ", job)
 			record, err := r.Read()
 
-			if err == io.EOF {
+			if errors.Is(err, io.EOF) {
 				break
 			}
 
