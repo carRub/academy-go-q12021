@@ -109,16 +109,14 @@ func (s *Service) GetCharactersConcurrently(t string, items int, itemsPerWorkers
 
 	wg := new(sync.WaitGroup)
 	wg.Add(workers)
-
 	for w := 0; w < workers; w++ {
-		go worker(jobs, shutdown, results, wg, t)
+		go worker(jobs, shutdown, results, wg, t, len(rows))
 	}
 
 	for _, row := range rows {
 		jobs <- row
 	}
 	close(jobs)
-	fmt.Println("closed jobs")
 
 	go func() {
 		wg.Wait()
@@ -223,19 +221,17 @@ func readAllRecordsFromCsv(s *Service) ([]model.Character, error) {
 	return characters, nil
 }
 
-func worker(jobs <-chan model.Character, shutdown <-chan struct{}, results chan model.Character, wg *sync.WaitGroup, t string) {
+func worker(jobs <-chan model.Character, shutdown <-chan struct{}, results chan model.Character, wg *sync.WaitGroup, t string, fileLength int) {
+	defer wg.Done()
 	for character := range jobs {
 		select {
 		case <-shutdown:
-			wg.Done()
 			return
 		default:
-			fmt.Println(character.ID)
 			if !isOfType(t, character.ID) {
 				break
 			}
 			results <- character
 		}
 	}
-	fmt.Println("finished jobs")
 }
