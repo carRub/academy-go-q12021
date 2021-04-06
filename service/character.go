@@ -109,6 +109,7 @@ func (s *Service) GetCharactersConcurrently(t string, items int, itemsPerWorkers
 
 	wg := new(sync.WaitGroup)
 	wg.Add(workers)
+
 	for w := 0; w < workers; w++ {
 		go worker(jobs, shutdown, results, wg, t, len(rows))
 	}
@@ -125,6 +126,7 @@ func (s *Service) GetCharactersConcurrently(t string, items int, itemsPerWorkers
 
 	var characters []model.Character
 	for character := range results {
+
 		if len(characters) == items {
 			break
 		}
@@ -153,6 +155,7 @@ func readRecordFromCsv(s *Service, id int) (model.Character, error) {
 	if err != nil {
 		log.Fatal("Error creating file reader", err)
 	}
+
 	r := csv.NewReader(csvFile)
 	defer csvFile.Close()
 
@@ -191,6 +194,7 @@ func readAllRecordsFromCsv(s *Service) ([]model.Character, error) {
 	if err != nil {
 		log.Fatal("Error creating file reader", err)
 	}
+
 	r := csv.NewReader(csvFile)
 	defer csvFile.Close()
 
@@ -231,6 +235,7 @@ func worker(jobs <-chan model.Character, shutdown <-chan struct{}, results chan 
 			if !isOfType(t, character.ID) {
 				break
 			}
+
 			results <- character
 		}
 	}
