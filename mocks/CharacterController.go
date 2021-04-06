@@ -23,6 +23,11 @@ func (_m *CharacterController) GetCharacters(w http.ResponseWriter, r *http.Requ
 	_m.Called(w, r)
 }
 
+// GetCharactersConcurrently provides a mock function with given fields: w, r
+func (_m *CharacterController) GetCharactersConcurrently(w http.ResponseWriter, r *http.Request) {
+	_m.Called(w, r)
+}
+
 // InsertExternalCharacter provides a mock function with given fields: w, r
 func (_m *CharacterController) InsertExternalCharacter(w http.ResponseWriter, r *http.Request) {
 	_m.Called(w, r)

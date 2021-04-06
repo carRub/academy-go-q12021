@@ -58,16 +58,48 @@ func (_m *CharacterUseCase) GetCharacters() ([]model.Character, error) {
 	return r0, r1
 }
 
-// InsertExternalCharacter provides a mock function with given fields: id
-func (_m *CharacterUseCase) InsertExternalCharacter(id int) error {
-	ret := _m.Called(id)
+// GetCharactersConcurrently provides a mock function with given fields: t, items, itemsPerWorker
+func (_m *CharacterUseCase) GetCharactersConcurrently(t string, items int, itemsPerWorker int) ([]model.Character, error) {
+	ret := _m.Called(t, items, itemsPerWorker)
 
-	var r0 error
-	if rf, ok := ret.Get(0).(func(int) error); ok {
-		r0 = rf(id)
+	var r0 []model.Character
+	if rf, ok := ret.Get(0).(func(string, int, int) []model.Character); ok {
+		r0 = rf(t, items, itemsPerWorker)
 	} else {
-		r0 = ret.Error(0)
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]model.Character)
+		}
 	}
 
-	return r0
+	var r1 error
+	if rf, ok := ret.Get(1).(func(string, int, int) error); ok {
+		r1 = rf(t, items, itemsPerWorker)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// InsertExternalCharacter provides a mock function with given fields: id
+func (_m *CharacterUseCase) InsertExternalCharacter(id int) (*model.Character, error) {
+	ret := _m.Called(id)
+
+	var r0 *model.Character
+	if rf, ok := ret.Get(0).(func(int) *model.Character); ok {
+		r0 = rf(id)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*model.Character)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(int) error); ok {
+		r1 = rf(id)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
 }
