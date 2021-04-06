@@ -12,6 +12,7 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"sync"
 
 	"github.com/carRub/academy-go-q12021/model"
 )
@@ -96,7 +97,6 @@ func (s *Service) InsertExternalCharacter(id int) (*model.Character, error) {
 
 func (s *Service) GetCharactersConcurrently(t string, items int, itemsPerWorkers int) ([]model.Character, error) {
 	workers := int(math.Ceil((float64(items) / float64(itemsPerWorkers))))
-	fmt.Println(workers)
 
 	rows, err := readAllRecordsFromCsv(s)
 	if err != nil {
@@ -105,40 +105,34 @@ func (s *Service) GetCharactersConcurrently(t string, items int, itemsPerWorkers
 
 	results := make(chan model.Character, items)
 	shutdown := make(chan struct{})
-	jobs := make(chan int, len(rows))
+	jobs := make(chan model.Character, len(rows))
 
-	csvFile, err := os.Open(s.file)
-	if err != nil {
-		return nil, fmt.Errorf("Error creating file reader %w", err)
-	}
-	r := csv.NewReader(csvFile)
-	defer csvFile.Close()
+	wg := new(sync.WaitGroup)
+	wg.Add(workers)
 
-	for w := 1; w <= 3; w++ {
-		go worker(r, jobs, shutdown, results)
+	for w := 0; w < workers; w++ {
+		go worker(jobs, shutdown, results, wg, t)
 	}
 
-	for i := 1; i <= items; i++ {
-		jobs <- i
+	for _, row := range rows {
+		jobs <- row
 	}
 	close(jobs)
+	fmt.Println("closed jobs")
+
+	go func() {
+		wg.Wait()
+		close(results)
+	}()
 
 	var characters []model.Character
 	for character := range results {
-		fmt.Println("iterating Results")
-		fmt.Println("Characters: ", characters)
-
-		if isOfType(t, character.ID) {
-			fmt.Println("appending")
-			characters = append(characters, character)
-		}
-
-		if len(characters) == itemsPerWorkers {
-			fmt.Println("leaving results for")
+		if len(characters) == items {
 			break
 		}
+
+		characters = append(characters, character)
 	}
-	fmt.Println("shutting down")
 	close(shutdown)
 
 	return characters, nil
@@ -229,37 +223,19 @@ func readAllRecordsFromCsv(s *Service) ([]model.Character, error) {
 	return characters, nil
 }
 
-func worker(r *csv.Reader, jobs <-chan int, shutdown <-chan struct{}, results chan model.Character) {
-	for job := range jobs {
+func worker(jobs <-chan model.Character, shutdown <-chan struct{}, results chan model.Character, wg *sync.WaitGroup, t string) {
+	for character := range jobs {
 		select {
 		case <-shutdown:
-			//log
-			fmt.Println("shutting down from worker")
+			wg.Done()
 			return
 		default:
-			fmt.Println("The job is: ", job)
-			record, err := r.Read()
-
-			if errors.Is(err, io.EOF) {
+			fmt.Println(character.ID)
+			if !isOfType(t, character.ID) {
 				break
 			}
-
-			var character model.Character
-			charID, err := strconv.ParseInt(record[0], 10, 64)
-			if err != nil {
-				log.Fatal("worker: couldn't cast string to int")
-			}
-
-			character.ID = int(charID)
-			character.Name = record[1]
-			character.Status = record[2]
-			character.Species = record[3]
-			character.Gender = record[4]
-			
-			fmt.Println(character)
 			results <- character
-		
 		}
 	}
-	fmt.Println("leaving worker")
+	fmt.Println("finished jobs")
 }
