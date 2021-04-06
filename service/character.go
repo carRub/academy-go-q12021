@@ -8,6 +8,7 @@ import (
 	"io"
 	"io/ioutil"
 	"log"
+	"math"
 	"net/http"
 	"os"
 	"strconv"
@@ -33,35 +34,9 @@ func NewCharacterService(url, file string) (*Service, error) {
 }
 
 func (s *Service) GetCharacters() ([]model.Character, error) {
-	csvFile, err := os.Open(s.file)
+	characters, err := readAllRecordsFromCsv(s)
 	if err != nil {
-		log.Fatal("Error creating file reader", err)
-	}
-	r := csv.NewReader(csvFile)
-	defer csvFile.Close()
-
-	var character model.Character
-	var characters []model.Character
-
-	for {
-		record, err := r.Read()
-
-		if errors.Is(err, io.EOF) {
-			break
-		}
-
-		charID, err := strconv.ParseInt(record[0], 10, 64)
-		if err != nil {
-			log.Fatal("Service/getCharacters: couldn't cast string to int")
-		}
-
-		character.ID = int(charID)
-		character.Name = record[1]
-		character.Status = record[2]
-		character.Species = record[3]
-		character.Gender = record[4]
-
-		characters = append(characters, character)
+		return nil, fmt.Errorf("Could not get characters %w", err)
 	}
 
 	return characters, nil
@@ -120,13 +95,21 @@ func (s *Service) InsertExternalCharacter(id int) (*model.Character, error) {
 }
 
 func (s *Service) GetCharactersConcurrently(t string, items int, itemsPerWorkers int) ([]model.Character, error) {
-	results := make(chan model.Character)
+	workers := int(math.Ceil((float64(items) / float64(itemsPerWorkers))))
+	fmt.Println(workers)
+
+	rows, err := readAllRecordsFromCsv(s)
+	if err != nil {
+		return nil, fmt.Errorf("Could not get characters %w", err)
+	}
+
+	results := make(chan model.Character, items)
 	shutdown := make(chan struct{})
-	jobs := make(chan int, items)
+	jobs := make(chan int, len(rows))
 
 	csvFile, err := os.Open(s.file)
 	if err != nil {
-		return nil, fmt.Errorf("Error creating file reader", err)
+		return nil, fmt.Errorf("Error creating file reader %w", err)
 	}
 	r := csv.NewReader(csvFile)
 	defer csvFile.Close()
@@ -209,6 +192,41 @@ func readRecordFromCsv(s *Service, id int) (model.Character, error) {
 	}
 
 	return character, nil
+}
+
+func readAllRecordsFromCsv(s *Service) ([]model.Character, error) {
+	csvFile, err := os.Open(s.file)
+	if err != nil {
+		log.Fatal("Error creating file reader", err)
+	}
+	r := csv.NewReader(csvFile)
+	defer csvFile.Close()
+
+	var character model.Character
+	var characters []model.Character
+
+	for {
+		record, err := r.Read()
+
+		if errors.Is(err, io.EOF) {
+			break
+		}
+
+		charID, err := strconv.ParseInt(record[0], 10, 64)
+		if err != nil {
+			log.Fatal("Service/getCharacters: couldn't cast string to int")
+		}
+
+		character.ID = int(charID)
+		character.Name = record[1]
+		character.Status = record[2]
+		character.Species = record[3]
+		character.Gender = record[4]
+
+		characters = append(characters, character)
+	}
+
+	return characters, nil
 }
 
 func worker(r *csv.Reader, jobs <-chan int, shutdown <-chan struct{}, results chan model.Character) {
